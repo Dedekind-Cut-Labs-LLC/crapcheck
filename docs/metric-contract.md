@@ -34,11 +34,28 @@ The references use different language-specific coverage primitives. Crapcheck fo
 
 Crapcheck is not a source port. Reference implementations may be observed for behavior, report conventions, and test cases, but their source must not be copied or translated. Crapcheck's implementation and tests must be independently written.
 
+## Implemented complexity contract
+
+Each named function, asynchronous function, method, and nested function starts at complexity one. Its qualified name includes enclosing classes and functions.
+
+The current analyzer adds:
+
+| Python construct | Complexity increment |
+|---|---:|
+| `if` or `elif` | 1 |
+| `for` or `async for` | 1 |
+| `while` | 1 |
+| each `except` handler | 1 |
+| conditional expression (`x if condition else y`) | 1 |
+| Boolean `and` or `or` expression | number of operands minus 1 |
+
+Decisions inside a nested function, lambda, or class do not increase the enclosing function's complexity. Named nested functions and methods are analyzed separately.
+
 ## Not decided yet
 
 The following should be settled only as their implementation increments begin:
 
-- The exact complexity contribution of every Python syntax construct.
+- Complexity treatment for comprehensions, `match`, assertions, and lambdas.
 - Nested-function coverage attribution.
 - Coverage input discovery and command-line shape.
 - Additional output formats.

@@ -7,7 +7,7 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from crapcheck import __version__
-from crapcheck.analysis import analyze_source
+from crapcheck.analysis import FunctionMetrics, analyze_source
 from crapcheck.coverage import load_function_coverage
 from crapcheck.report import format_text_report
 from crapcheck.threshold import DEFAULT_MAX_CRAP, exceeds_crap_threshold
@@ -24,7 +24,13 @@ def build_parser() -> argparse.ArgumentParser:
         action="version",
         version=f"%(prog)s {__version__}",
     )
-    parser.add_argument("source", nargs="?", type=Path, help="Python source file to analyze")
+    parser.add_argument(
+        "sources",
+        nargs="*",
+        type=Path,
+        metavar="SOURCE",
+        help="Python source file to analyze",
+    )
     parser.add_argument(
         "--coverage",
         type=Path,
@@ -48,18 +54,24 @@ def main(argv: Sequence[str] | None = None) -> int:
     """Run the Crapcheck command-line interface."""
     parser = build_parser()
     args = parser.parse_args(argv)
-    source_path: Path | None = args.source
+    source_paths: list[Path] = sorted(set(args.sources), key=lambda path: path.as_posix())
     coverage_path: Path | None = args.coverage
     max_crap: float = args.max_crap
     no_fail: bool = args.no_fail
-    if source_path is None:
+    if not source_paths:
         parser.print_help()
         return 0
     if coverage_path is None:
         parser.error("--coverage is required when SOURCE is provided")
 
-    source = source_path.read_text(encoding="utf-8")
-    coverage = load_function_coverage(coverage_path, source_path)
-    metrics = analyze_source(source, coverage)
-    print(format_text_report(source_path.stem, metrics))
-    return int(not no_fail and exceeds_crap_threshold(metrics, max_crap))
+    modules: list[tuple[str, list[FunctionMetrics]]] = []
+    all_metrics: list[FunctionMetrics] = []
+    for source_path in source_paths:
+        source = source_path.read_text(encoding="utf-8")
+        coverage = load_function_coverage(coverage_path, source_path)
+        metrics = analyze_source(source, coverage)
+        modules.append((source_path.stem, metrics))
+        all_metrics.extend(metrics)
+
+    print(format_text_report(modules))
+    return int(not no_fail and exceeds_crap_threshold(all_metrics, max_crap))

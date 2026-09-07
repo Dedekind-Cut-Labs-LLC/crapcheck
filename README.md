@@ -17,12 +17,14 @@ Its initial behavioral references are Robert C. Martin's `crap4java`, `crap4go`,
 ## Usage
 
 ```console
-crapcheck path/to/module.py --coverage coverage.json
+crapcheck path/to/first.py path/to/second.py --coverage coverage.json
 ```
 
 By default, Crapcheck exits with status 1 when any available CRAP score is greater than `8.0`. Use `--max-crap NUMBER` to change that boundary or `--no-fail` to produce a report without threshold failure.
 
-An exact source-path key in the coverage report is preferred. Otherwise, Crapcheck accepts one unambiguous whole-component suffix match, allowing an absolute source argument to match a relative coverage key. It fails clearly rather than guessing when multiple report keys match. Recursive source discovery and filesystem path resolution are deferred.
+One or more explicit Python files may be supplied. Crapcheck deduplicates and sorts them before producing one globally sorted report and evaluating the threshold across all files.
+
+An exact source-path key in the coverage report is preferred. Otherwise, Crapcheck accepts one unambiguous whole-component suffix match, allowing an absolute source argument to match a relative coverage key. It fails clearly rather than guessing when multiple report keys match. Directory discovery and filesystem path resolution are deferred.
 
 ## Development setup
 

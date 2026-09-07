@@ -59,7 +59,7 @@ These Python-specific rules were checked behaviorally against Radon 6 and covera
 
 ## Implemented coverage contract
 
-Crapcheck reads coverage.py JSON reports containing function-region data. For one selected source-file key, it returns each named function region's `percent_statements_covered` value.
+Crapcheck reads coverage.py 7.12 or newer JSON reports containing function-region data and separate statement percentages. For one selected source-file key, it returns each named function region's `percent_statements_covered` value. Coverage.py 7.6 introduced function-region JSON data; 7.12 introduced the separate statement percentage required by this contract.
 
 - Statement coverage is used, not coverage.py's combined statement-and-branch percentage.
 - The empty-name module pseudo-region is ignored.
@@ -88,6 +88,10 @@ The default maximum CRAP score is `8.0`. After printing the report, Crapcheck ex
 ## Implemented command-line failures
 
 Status 0 means analysis succeeded without an enforced violation, status 1 means at least one available score exceeded the threshold, and status 2 means command usage or an input was invalid. Missing sources or coverage reports, empty source directories, non-Python explicit files, malformed JSON, incompatible coverage data, invalid UTF-8, invalid Python syntax, and non-finite thresholds produce one concise `crapcheck: error:` message on standard error without a traceback.
+
+## Verified coverage.py workflow
+
+The integration suite runs a real Python test under coverage.py, exports JSON, invokes Crapcheck as a subprocess, and verifies the exact function-level report. The fixture deliberately has 66.7% function statement coverage while its file has 75.0% statement coverage, proving Crapcheck reads the function region rather than the file total.
 
 ## Not decided yet
 

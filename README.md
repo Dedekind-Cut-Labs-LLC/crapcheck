@@ -14,11 +14,28 @@ CRAP(m) = complexity(m)^2 * (1 - coverage(m) / 100)^3 + complexity(m)
 
 Its initial behavioral references are Robert C. Martin's `crap4java`, `crap4go`, and `crap4clj` tools. Crapcheck is an independent implementation; their source code is not copied.
 
-## Usage
+## Installation
+
+Crapcheck requires Python 3.11 or newer and has no runtime dependencies. From a source checkout:
 
 ```console
+python -m pip install .
+```
+
+The project being analyzed must produce a JSON report with coverage.py 7.12 or newer. Version 7.6 introduced function regions, and version 7.12 added the separate statement percentage Crapcheck uses. See the [coverage.py change history](https://coverage.readthedocs.io/en/latest/changes.html).
+
+## Usage
+
+Generate coverage while running the project's tests, export the JSON report, and analyze the source tree:
+
+```console
+python -m pip install "coverage>=7.12"
+coverage run --source=src -m pytest
+coverage json -o coverage.json
 crapcheck src --coverage coverage.json
 ```
+
+Replace `src` and `pytest` with the source root and test command used by the project. Crapcheck consumes existing measured coverage; it does not run tests itself.
 
 By default, Crapcheck exits with status 1 when any available CRAP score is greater than `8.0`. Use `--max-crap NUMBER` to change that boundary or `--no-fail` to produce a report without threshold failure.
 

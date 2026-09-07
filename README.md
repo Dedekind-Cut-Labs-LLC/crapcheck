@@ -2,7 +2,7 @@
 
 Crapcheck is a Python command-line implementation of the Change Risk Analysis and Predictions (CRAP) metric.
 
-The project is in initial development. The repository currently provides the package, CLI, tests, and quality gates; metric analysis is the next implementation increment.
+The project is in initial development. It can analyze one Python source file against function-region data in a coverage.py JSON report and print a function-level CRAP table.
 
 ## Intended use
 
@@ -13,6 +13,14 @@ CRAP(m) = complexity(m)^2 * (1 - coverage(m) / 100)^3 + complexity(m)
 ```
 
 Its initial behavioral references are Robert C. Martin's `crap4java`, `crap4go`, and `crap4clj` tools. Crapcheck is an independent implementation; their source code is not copied.
+
+## Usage
+
+```console
+crapcheck path/to/module.py --coverage coverage.json
+```
+
+The source path currently must exactly match its key under `files` in the coverage JSON report. Crapcheck reports results but does not yet enforce a CRAP threshold. Recursive source discovery and path normalization are also deferred.
 
 ## Development setup
 

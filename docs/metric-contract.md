@@ -70,13 +70,17 @@ Given Python source text and a mapping of qualified function names to statement-
 
 The human-readable report contains function, module, cyclomatic complexity, statement coverage percentage, and CRAP score columns. Numeric values use one decimal place. Rows are sorted stably from highest to lowest CRAP score, preserving input order for equal scores, with `N/A` scores after all numeric scores.
 
+## Implemented command-line analysis
+
+`crapcheck SOURCE --coverage COVERAGE_JSON` reads one UTF-8 Python source file, looks up coverage using the source argument as the exact coverage-report file key, analyzes its functions, and prints the text report. The report's module column uses the source filename without its final suffix. A command with no arguments continues to print help and succeed.
+
 ## Not decided yet
 
 The following should be settled only as their implementation increments begin:
 
 - Complexity treatment for comprehensions, `match`, assertions, and lambdas.
 - Coverage-file path normalization and unambiguous suffix matching.
-- Coverage input discovery and command-line shape.
+- Multi-file coverage input discovery and command-line shape.
 - Additional output formats.
 - Repository-wide configuration.
 - CI annotation formats.

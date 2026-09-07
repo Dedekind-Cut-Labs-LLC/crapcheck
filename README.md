@@ -2,7 +2,7 @@
 
 Crapcheck is a Python command-line implementation of the Change Risk Analysis and Predictions (CRAP) metric.
 
-The project is in initial development. It can analyze one Python source file against function-region data in a coverage.py JSON report and print a function-level CRAP table.
+The project is in initial development. It analyzes Python source files and directories against function-region data in a coverage.py JSON report and prints a function-level CRAP table.
 
 ## Intended use
 
@@ -17,14 +17,16 @@ Its initial behavioral references are Robert C. Martin's `crap4java`, `crap4go`,
 ## Usage
 
 ```console
-crapcheck path/to/first.py path/to/second.py --coverage coverage.json
+crapcheck src --coverage coverage.json
 ```
 
 By default, Crapcheck exits with status 1 when any available CRAP score is greater than `8.0`. Use `--max-crap NUMBER` to change that boundary or `--no-fail` to produce a report without threshold failure.
 
-One or more explicit Python files may be supplied. Crapcheck deduplicates and sorts them before producing one globally sorted report and evaluating the threshold across all files.
+One or more Python files or directories may be supplied. Directories are searched recursively for `*.py` files. Crapcheck resolves, deduplicates, and lexically sorts the files before producing one globally sorted report and evaluating the threshold across all files. Hidden directories and common generated environments (`__pycache__`, `build`, `dist`, `node_modules`, and `venv`) are excluded from recursive discovery. An explicitly supplied file remains explicit.
 
-An exact source-path key in the coverage report is preferred. Otherwise, Crapcheck accepts one unambiguous whole-component suffix match, allowing an absolute source argument to match a relative coverage key. It fails clearly rather than guessing when multiple report keys match. Directory discovery and filesystem path resolution are deferred.
+The report uses dotted package names when `__init__.py` files establish a package, such as `crapcheck.cli`; standalone files use their filename without the `.py` suffix.
+
+An exact source-path key in the coverage report is preferred. Otherwise, Crapcheck accepts one unambiguous whole-component suffix match, allowing an absolute source argument to match a relative coverage key. It fails clearly rather than guessing when multiple report keys match.
 
 ## Development setup
 

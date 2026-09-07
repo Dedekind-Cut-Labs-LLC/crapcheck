@@ -79,7 +79,7 @@ The human-readable report combines one or more modules and contains function, mo
 
 ## Implemented command-line analysis
 
-`crapcheck SOURCE [SOURCE ...] --coverage COVERAGE_JSON` accepts one or more UTF-8 Python source files. Source arguments are deduplicated and sorted lexically, each is matched to a coverage-report file key, and all functions are emitted in one globally sorted report. This also makes equal-score ordering independent of source argument order. The report's module column uses each source filename without its final suffix. The threshold is evaluated across all functions. A command with no arguments continues to print help and succeed.
+`crapcheck SOURCE [SOURCE ...] --coverage COVERAGE_JSON` accepts one or more UTF-8 Python source files or directories. Directories are searched recursively for `*.py`. Discovered files are resolved, deduplicated, and sorted lexically; each is matched to a coverage-report file key, and all functions are emitted in one globally sorted report. This makes equal-score ordering independent of source argument order. Hidden directories and `__pycache__`, `build`, `dist`, `node_modules`, and `venv` directories are excluded from recursive discovery. Explicit files are not filtered by that directory policy. The module column uses dotted package names established by `__init__.py` files and otherwise uses the filename without its final suffix. The threshold is evaluated across all functions. A command with no arguments continues to print help and succeed.
 
 ## Implemented threshold behavior
 
@@ -89,8 +89,7 @@ The default maximum CRAP score is `8.0`. After printing the report, Crapcheck ex
 
 The following should be settled only as their implementation increments begin:
 
-- Cross-platform and filesystem-resolved path normalization.
-- Directory discovery, exclusions, and module naming.
+- Cross-platform coverage-report path normalization.
 - Additional output formats.
 - Repository-wide configuration.
 - CI annotation formats.

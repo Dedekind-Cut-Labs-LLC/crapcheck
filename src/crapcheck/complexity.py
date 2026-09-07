@@ -50,6 +50,25 @@ class _DecisionCounter(ast.NodeVisitor):
         self.complexity += len(node.values) - 1
         self.generic_visit(node)
 
+    def visit_comprehension(self, node: ast.comprehension) -> None:
+        self.complexity += 1 + len(node.ifs)
+        self.generic_visit(node)
+
+    def visit_Match(self, node: ast.Match) -> None:
+        self.complexity += sum(
+            not (
+                isinstance(case.pattern, ast.MatchAs)
+                and case.pattern.pattern is None
+                and case.guard is None
+            )
+            for case in node.cases
+        )
+        self.generic_visit(node)
+
+    def visit_Assert(self, node: ast.Assert) -> None:
+        self.complexity += 1
+        self.generic_visit(node)
+
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
         return None
 
@@ -57,7 +76,7 @@ class _DecisionCounter(ast.NodeVisitor):
         return None
 
     def visit_Lambda(self, node: ast.Lambda) -> None:
-        return None
+        self.generic_visit(node)
 
     def visit_ClassDef(self, node: ast.ClassDef) -> None:
         return None

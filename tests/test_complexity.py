@@ -98,3 +98,55 @@ def test_nested_function_decisions_do_not_inflate_the_outer_function() -> None:
         FunctionComplexity("outer", 1, 9, 2),
         FunctionComplexity("outer.inner", 2, 5, 2),
     ]
+
+
+def test_counts_each_comprehension_generator_and_filter() -> None:
+    assert analyze_complexity(
+        source(
+            """
+            def comprehension(items):
+                return [y for item in items if item for y in item if y]
+            """
+        )
+    ) == [FunctionComplexity("comprehension", 1, 2, 5)]
+
+
+def test_counts_nondefault_match_cases() -> None:
+    assert analyze_complexity(
+        source(
+            """
+            def pattern(value, ready):
+                match value:
+                    case 0:
+                        return "zero"
+                    case 1 | 2 if ready:
+                        return "ready"
+                    case _:
+                        return "other"
+            """
+        )
+    ) == [FunctionComplexity("pattern", 1, 8, 3)]
+
+
+def test_counts_assertions() -> None:
+    assert analyze_complexity(
+        source(
+            """
+            def assertion(value):
+                assert value
+                return value
+            """
+        )
+    ) == [FunctionComplexity("assertion", 1, 3, 2)]
+
+
+def test_counts_lambda_body_decisions_in_the_enclosing_function() -> None:
+    assert analyze_complexity(
+        source(
+            """
+            def lambda_holder(items):
+                predicate = lambda item: item > 0 and item < 10
+                return [item for item in items if predicate(item)]
+            """
+        )
+    ) == [FunctionComplexity("lambda_holder", 1, 3, 4)]

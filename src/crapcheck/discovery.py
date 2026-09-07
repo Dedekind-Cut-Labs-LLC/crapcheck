@@ -17,6 +17,10 @@ _EXCLUDED_DIRECTORIES = frozenset(
 )
 
 
+class SourceDiscoveryError(ValueError):
+    """Raised when a source input cannot identify Python files."""
+
+
 @dataclass(frozen=True, slots=True)
 class DiscoveredSource:
     """One normalized Python source file and its report module name."""
@@ -30,10 +34,17 @@ def discover_sources(inputs: Iterable[Path]) -> list[DiscoveredSource]:
     source_paths: set[Path] = set()
     for input_path in inputs:
         normalized = input_path.resolve()
+        if not normalized.exists():
+            raise SourceDiscoveryError(f"source does not exist: {normalized}")
         if normalized.is_dir():
-            source_paths.update(_discover_directory(normalized))
-        else:
-            source_paths.add(normalized)
+            discovered = _discover_directory(normalized)
+            if not discovered:
+                raise SourceDiscoveryError(f"no Python source files found in: {normalized}")
+            source_paths.update(discovered)
+            continue
+        if not normalized.is_file() or normalized.suffix != ".py":
+            raise SourceDiscoveryError(f"source is not a Python file: {normalized}")
+        source_paths.add(normalized)
 
     return [
         DiscoveredSource(path=path, module=_module_name(path))

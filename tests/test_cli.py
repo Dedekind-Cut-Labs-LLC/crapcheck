@@ -31,7 +31,7 @@ def test_module_reports_version() -> None:
     assert result.stdout.strip() == f"crapcheck {__version__}"
 
 
-def _write_analysis_fixture(tmp_path: Path) -> tuple[Path, Path]:
+def _write_analysis_fixture(tmp_path: Path) -> tuple[Path, Path, Path]:
     source_path = tmp_path / "sample.py"
     source_path.write_text(
         "def safe():\n"
@@ -45,6 +45,11 @@ def _write_analysis_fixture(tmp_path: Path) -> tuple[Path, Path]:
         "    return 0\n",
         encoding="utf-8",
     )
+    alpha_path = tmp_path / "alpha.py"
+    alpha_path.write_text(
+        "def steady(flag):\n    return 1 if flag else 0\n\ndef alpha_safe():\n    return 1\n",
+        encoding="utf-8",
+    )
     coverage_path = tmp_path / "coverage.json"
     coverage_path.write_text(
         json.dumps(
@@ -55,20 +60,26 @@ def _write_analysis_fixture(tmp_path: Path) -> tuple[Path, Path]:
                             "safe": {"summary": {"percent_statements_covered": 100.0}},
                             "risky": {"summary": {"percent_statements_covered": 0.0}},
                         }
-                    }
+                    },
+                    str(alpha_path): {
+                        "functions": {
+                            "steady": {"summary": {"percent_statements_covered": 50.0}},
+                            "alpha_safe": {"summary": {"percent_statements_covered": 100.0}},
+                        }
+                    },
                 }
             }
         ),
         encoding="utf-8",
     )
-    return source_path, coverage_path
+    return source_path, alpha_path, coverage_path
 
 
 def test_analyzes_one_source_file_with_exact_coverage_key(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    source_path, coverage_path = _write_analysis_fixture(tmp_path)
+    source_path, _, coverage_path = _write_analysis_fixture(tmp_path)
 
     assert main([str(source_path), "--coverage", str(coverage_path)]) == 1
     assert capsys.readouterr().out == (
@@ -83,10 +94,36 @@ def test_custom_threshold_and_no_fail_control_exit_status(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    source_path, coverage_path = _write_analysis_fixture(tmp_path)
+    source_path, _, coverage_path = _write_analysis_fixture(tmp_path)
     arguments = [str(source_path), "--coverage", str(coverage_path)]
 
     assert main([*arguments, "--max-crap", "12"]) == 0
     capsys.readouterr()
     assert main([*arguments, "--max-crap", "5", "--no-fail"]) == 0
     assert "risky" in capsys.readouterr().out
+
+
+def test_multiple_files_produce_one_deterministic_global_report(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    sample_path, alpha_path, coverage_path = _write_analysis_fixture(tmp_path)
+    options = ["--coverage", str(coverage_path), "--no-fail"]
+
+    assert main([str(sample_path), str(alpha_path), *options]) == 0
+    first_report = capsys.readouterr().out
+    assert main([str(alpha_path), str(sample_path), *options]) == 0
+    second_report = capsys.readouterr().out
+
+    assert (
+        first_report
+        == second_report
+        == (
+            "Function    Module  CC   Cov%  CRAP\n"
+            "----------  ------  --  -----  ----\n"
+            "risky       sample   3    0.0  12.0\n"
+            "steady      alpha    2   50.0   2.5\n"
+            "alpha_safe  alpha    1  100.0   1.0\n"
+            "safe        sample   1  100.0   1.0\n"
+        )
+    )

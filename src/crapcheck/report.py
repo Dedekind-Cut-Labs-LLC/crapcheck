@@ -7,15 +7,21 @@ from collections.abc import Iterable
 from crapcheck.analysis import FunctionMetrics
 
 
-def _report_order(function: FunctionMetrics) -> tuple[int, float]:
+def _report_order(reported: tuple[str, FunctionMetrics]) -> tuple[int, float]:
+    _, function = reported
     if function.crap_score is None:
         return (1, 0.0)
     return (0, -function.crap_score)
 
 
-def format_text_report(module: str, functions: Iterable[FunctionMetrics]) -> str:
-    """Format function metrics as a stable, worst-first text table."""
+def format_text_report(
+    modules: Iterable[tuple[str, Iterable[FunctionMetrics]]],
+) -> str:
+    """Format metrics from one or more modules as a stable, worst-first text table."""
     headers = ("Function", "Module", "CC", "Cov%", "CRAP")
+    reported_functions = [
+        (module, function) for module, functions in modules for function in functions
+    ]
     rows = [
         (
             function.name,
@@ -24,7 +30,7 @@ def format_text_report(module: str, functions: Iterable[FunctionMetrics]) -> str
             "N/A" if function.coverage_percent is None else f"{function.coverage_percent:.1f}",
             "N/A" if function.crap_score is None else f"{function.crap_score:.1f}",
         )
-        for function in sorted(functions, key=_report_order)
+        for module, function in sorted(reported_functions, key=_report_order)
     ]
     widths = tuple(
         max(len(header), *(len(row[index]) for row in rows)) for index, header in enumerate(headers)

@@ -48,8 +48,14 @@ The current analyzer adds:
 | each `except` handler | 1 |
 | conditional expression (`x if condition else y`) | 1 |
 | Boolean `and` or `or` expression | number of operands minus 1 |
+| comprehension generator | 1 |
+| comprehension filter | 1 |
+| `match` statement | 1 per non-default case |
+| `assert` statement | 1 |
 
-Decisions inside a nested function, lambda, or class do not increase the enclosing function's complexity. Named nested functions and methods are analyzed separately.
+An unguarded irrefutable `match` case is the default and does not add complexity. Lambdas are not reported separately because coverage.py does not emit separate lambda function regions; decisions in a lambda body contribute to its enclosing named function. Decisions inside a nested named function or class do not increase the enclosing function's complexity. Named nested functions and methods are analyzed separately.
+
+These Python-specific rules were checked behaviorally against Radon 6 and coverage.py 7. Crapcheck remains an independent implementation and does not depend on either package at runtime.
 
 ## Implemented coverage contract
 
@@ -83,7 +89,6 @@ The default maximum CRAP score is `8.0`. After printing the report, Crapcheck ex
 
 The following should be settled only as their implementation increments begin:
 
-- Complexity treatment for comprehensions, `match`, assertions, and lambdas.
 - Cross-platform and filesystem-resolved path normalization.
 - Multi-file coverage input discovery and command-line shape.
 - Additional output formats.

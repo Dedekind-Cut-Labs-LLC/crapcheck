@@ -74,6 +74,10 @@ The human-readable report contains function, module, cyclomatic complexity, stat
 
 `crapcheck SOURCE --coverage COVERAGE_JSON` reads one UTF-8 Python source file, looks up coverage using the source argument as the exact coverage-report file key, analyzes its functions, and prints the text report. The report's module column uses the source filename without its final suffix. A command with no arguments continues to print help and succeed.
 
+## Implemented threshold behavior
+
+The default maximum CRAP score is `8.0`. After printing the report, Crapcheck exits with status 1 if any available score is strictly greater than the maximum. A score equal to the maximum succeeds, and an `N/A` score does not cause failure. `--max-crap NUMBER` changes the maximum; `--no-fail` always returns success after reporting. Invalid command-line usage remains argparse's status 2.
+
 ## Not decided yet
 
 The following should be settled only as their implementation increments begin:

@@ -20,7 +20,9 @@ Its initial behavioral references are Robert C. Martin's `crap4java`, `crap4go`,
 crapcheck path/to/module.py --coverage coverage.json
 ```
 
-The source path currently must exactly match its key under `files` in the coverage JSON report. Crapcheck reports results but does not yet enforce a CRAP threshold. Recursive source discovery and path normalization are also deferred.
+By default, Crapcheck exits with status 1 when any available CRAP score is greater than `8.0`. Use `--max-crap NUMBER` to change that boundary or `--no-fail` to produce a report without threshold failure.
+
+The source path currently must exactly match its key under `files` in the coverage JSON report. Recursive source discovery and path normalization are deferred.
 
 ## Development setup
 

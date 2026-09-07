@@ -31,18 +31,17 @@ def test_module_reports_version() -> None:
     assert result.stdout.strip() == f"crapcheck {__version__}"
 
 
-def test_analyzes_one_source_file_with_exact_coverage_key(
-    tmp_path: Path,
-    capsys: pytest.CaptureFixture[str],
-) -> None:
+def _write_analysis_fixture(tmp_path: Path) -> tuple[Path, Path]:
     source_path = tmp_path / "sample.py"
     source_path.write_text(
         "def safe():\n"
         "    return 1\n"
         "\n"
         "def risky(flag):\n"
-        "    if flag:\n"
+        "    if flag > 0:\n"
         "        return 1\n"
+        "    if flag < 0:\n"
+        "        return -1\n"
         "    return 0\n",
         encoding="utf-8",
     )
@@ -62,11 +61,32 @@ def test_analyzes_one_source_file_with_exact_coverage_key(
         ),
         encoding="utf-8",
     )
+    return source_path, coverage_path
 
-    assert main([str(source_path), "--coverage", str(coverage_path)]) == 0
+
+def test_analyzes_one_source_file_with_exact_coverage_key(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    source_path, coverage_path = _write_analysis_fixture(tmp_path)
+
+    assert main([str(source_path), "--coverage", str(coverage_path)]) == 1
     assert capsys.readouterr().out == (
         "Function  Module  CC   Cov%  CRAP\n"
         "--------  ------  --  -----  ----\n"
-        "risky     sample   2    0.0   6.0\n"
+        "risky     sample   3    0.0  12.0\n"
         "safe      sample   1  100.0   1.0\n"
     )
+
+
+def test_custom_threshold_and_no_fail_control_exit_status(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    source_path, coverage_path = _write_analysis_fixture(tmp_path)
+    arguments = [str(source_path), "--coverage", str(coverage_path)]
+
+    assert main([*arguments, "--max-crap", "12"]) == 0
+    capsys.readouterr()
+    assert main([*arguments, "--max-crap", "5", "--no-fail"]) == 0
+    assert "risky" in capsys.readouterr().out

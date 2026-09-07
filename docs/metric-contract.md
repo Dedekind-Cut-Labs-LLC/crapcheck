@@ -83,7 +83,11 @@ The human-readable report combines one or more modules and contains function, mo
 
 ## Implemented threshold behavior
 
-The default maximum CRAP score is `8.0`. After printing the report, Crapcheck exits with status 1 if any available score is strictly greater than the maximum. A score equal to the maximum succeeds, and an `N/A` score does not cause failure. `--max-crap NUMBER` changes the maximum; `--no-fail` always returns success after reporting. Invalid command-line usage remains argparse's status 2.
+The default maximum CRAP score is `8.0`. After printing the report, Crapcheck exits with status 1 if any available score is strictly greater than the maximum. A score equal to the maximum succeeds, and an `N/A` score does not cause failure. `--max-crap NUMBER` changes the maximum; non-finite values are invalid. `--no-fail` always returns success after reporting.
+
+## Implemented command-line failures
+
+Status 0 means analysis succeeded without an enforced violation, status 1 means at least one available score exceeded the threshold, and status 2 means command usage or an input was invalid. Missing sources or coverage reports, empty source directories, non-Python explicit files, malformed JSON, incompatible coverage data, invalid UTF-8, invalid Python syntax, and non-finite thresholds produce one concise `crapcheck: error:` message on standard error without a traceback.
 
 ## Not decided yet
 

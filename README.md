@@ -22,6 +22,8 @@ crapcheck src --coverage coverage.json
 
 By default, Crapcheck exits with status 1 when any available CRAP score is greater than `8.0`. Use `--max-crap NUMBER` to change that boundary or `--no-fail` to produce a report without threshold failure.
 
+Exit statuses are stable: 0 means the analysis succeeded without an enforced violation, 1 means at least one available score exceeded the threshold, and 2 means the command or an input was invalid. Missing files, empty source directories, non-Python files, malformed or incompatible coverage reports, invalid UTF-8, invalid Python syntax, and non-finite thresholds produce a concise error on standard error without a traceback.
+
 One or more Python files or directories may be supplied. Directories are searched recursively for `*.py` files. Crapcheck resolves, deduplicates, and lexically sorts the files before producing one globally sorted report and evaluating the threshold across all files. Hidden directories and common generated environments (`__pycache__`, `build`, `dist`, `node_modules`, and `venv`) are excluded from recursive discovery. An explicitly supplied file remains explicit.
 
 The report uses dotted package names when `__init__.py` files establish a package, such as `crapcheck.cli`; standalone files use their filename without the `.py` suffix.

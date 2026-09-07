@@ -3,13 +3,16 @@
 from __future__ import annotations
 
 import argparse
+import json
+import math
 from collections.abc import Sequence
 from pathlib import Path
+from typing import NoReturn
 
 from crapcheck import __version__
 from crapcheck.analysis import FunctionMetrics, analyze_source
-from crapcheck.coverage import load_function_coverage
-from crapcheck.discovery import discover_sources
+from crapcheck.coverage import CoverageReportError, load_function_coverage
+from crapcheck.discovery import SourceDiscoveryError, discover_sources
 from crapcheck.report import format_text_report
 from crapcheck.threshold import DEFAULT_MAX_CRAP, exceeds_crap_threshold
 
@@ -64,15 +67,46 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 0
     if coverage_path is None:
         parser.error("--coverage is required when SOURCE is provided")
+    if not math.isfinite(max_crap):
+        _exit_with_error(parser, "--max-crap must be finite")
 
-    modules: list[tuple[str, list[FunctionMetrics]]] = []
-    all_metrics: list[FunctionMetrics] = []
-    for discovered in discover_sources(source_inputs):
-        source = discovered.path.read_text(encoding="utf-8")
-        coverage = load_function_coverage(coverage_path, discovered.path)
-        metrics = analyze_source(source, coverage)
-        modules.append((discovered.module, metrics))
-        all_metrics.extend(metrics)
+    try:
+        discovered_sources = discover_sources(source_inputs)
+        modules: list[tuple[str, list[FunctionMetrics]]] = []
+        all_metrics: list[FunctionMetrics] = []
+        for discovered in discovered_sources:
+            source = discovered.path.read_text(encoding="utf-8")
+            coverage = load_function_coverage(coverage_path, discovered.path)
+            try:
+                metrics = analyze_source(source, coverage)
+            except SyntaxError as error:
+                location = f"{error.lineno}:{error.offset}" if error.lineno else "unknown location"
+                _exit_with_error(
+                    parser,
+                    f"invalid Python syntax in {discovered.path}:{location}: {error.msg}",
+                )
+            modules.append((discovered.module, metrics))
+            all_metrics.extend(metrics)
+    except SourceDiscoveryError as error:
+        _exit_with_error(parser, str(error))
+    except json.JSONDecodeError as error:
+        _exit_with_error(
+            parser,
+            f"invalid coverage JSON {coverage_path}: {error.msg} "
+            f"at line {error.lineno} column {error.colno}",
+        )
+    except CoverageReportError as error:
+        _exit_with_error(parser, str(error))
+    except UnicodeDecodeError as error:
+        _exit_with_error(parser, f"input is not valid UTF-8: {error}")
+    except OSError as error:
+        filename = error.filename or "input"
+        detail = error.strerror or str(error)
+        _exit_with_error(parser, f"cannot read {filename}: {detail}")
 
     print(format_text_report(modules))
     return int(not no_fail and exceeds_crap_threshold(all_metrics, max_crap))
+
+
+def _exit_with_error(parser: argparse.ArgumentParser, message: str) -> NoReturn:
+    parser.exit(2, f"{parser.prog}: error: {message}\n")

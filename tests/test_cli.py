@@ -142,3 +142,131 @@ def test_directory_input_matches_explicit_file_analysis(
     explicit_report = capsys.readouterr().out
 
     assert directory_report == explicit_report
+
+
+def _run_cli(*arguments: str) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        [sys.executable, "-m", "crapcheck", *arguments],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+
+def _assert_cli_error(result: subprocess.CompletedProcess[str], message: str) -> None:
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert result.stderr == f"crapcheck: error: {message}\n"
+    assert "Traceback" not in result.stderr
+
+
+def test_missing_source_is_a_concise_cli_error(tmp_path: Path) -> None:
+    coverage_path = tmp_path / "coverage.json"
+    coverage_path.write_text('{"files": {}}', encoding="utf-8")
+    missing = (tmp_path / "missing.py").resolve()
+
+    _assert_cli_error(
+        _run_cli(str(missing), "--coverage", str(coverage_path)),
+        f"source does not exist: {missing}",
+    )
+
+
+def test_empty_directory_is_a_concise_cli_error(tmp_path: Path) -> None:
+    coverage_path = tmp_path / "coverage.json"
+    coverage_path.write_text('{"files": {}}', encoding="utf-8")
+
+    _assert_cli_error(
+        _run_cli(str(tmp_path), "--coverage", str(coverage_path)),
+        f"no Python source files found in: {tmp_path.resolve()}",
+    )
+
+
+def test_non_python_file_is_a_concise_cli_error(tmp_path: Path) -> None:
+    source_path = tmp_path / "notes.txt"
+    source_path.write_text("not Python", encoding="utf-8")
+    coverage_path = tmp_path / "coverage.json"
+    coverage_path.write_text('{"files": {}}', encoding="utf-8")
+
+    _assert_cli_error(
+        _run_cli(str(source_path), "--coverage", str(coverage_path)),
+        f"source is not a Python file: {source_path.resolve()}",
+    )
+
+
+def test_missing_coverage_report_is_a_concise_cli_error(tmp_path: Path) -> None:
+    source_path = tmp_path / "sample.py"
+    source_path.write_text("def run():\n    return 1\n", encoding="utf-8")
+    missing = tmp_path / "missing.json"
+
+    _assert_cli_error(
+        _run_cli(str(source_path), "--coverage", str(missing)),
+        f"cannot read {missing}: No such file or directory",
+    )
+
+
+def test_malformed_coverage_json_is_a_concise_cli_error(tmp_path: Path) -> None:
+    source_path = tmp_path / "sample.py"
+    source_path.write_text("def run():\n    return 1\n", encoding="utf-8")
+    coverage_path = tmp_path / "coverage.json"
+    coverage_path.write_text("{not json}", encoding="utf-8")
+
+    result = _run_cli(str(source_path), "--coverage", str(coverage_path))
+
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert result.stderr.startswith(f"crapcheck: error: invalid coverage JSON {coverage_path}:")
+    assert "Traceback" not in result.stderr
+
+
+def test_incompatible_coverage_report_is_a_concise_cli_error(tmp_path: Path) -> None:
+    source_path = tmp_path / "sample.py"
+    source_path.write_text("def run():\n    return 1\n", encoding="utf-8")
+    coverage_path = tmp_path / "coverage.json"
+    coverage_path.write_text(
+        json.dumps({"files": {str(source_path): {"executed_lines": [1]}}}),
+        encoding="utf-8",
+    )
+
+    result = _run_cli(str(source_path), "--coverage", str(coverage_path))
+
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert result.stderr == (
+        f"crapcheck: error: Coverage data for {source_path.resolve()} "
+        "does not contain function-region data\n"
+    )
+    assert "Traceback" not in result.stderr
+
+
+def test_invalid_python_syntax_is_a_concise_cli_error(tmp_path: Path) -> None:
+    source_path = tmp_path / "broken.py"
+    source_path.write_text("def broken(:\n    pass\n", encoding="utf-8")
+    coverage_path = tmp_path / "coverage.json"
+    coverage_path.write_text(
+        json.dumps({"files": {str(source_path): {"functions": {}}}}),
+        encoding="utf-8",
+    )
+
+    result = _run_cli(str(source_path), "--coverage", str(coverage_path))
+
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert result.stderr.startswith(
+        f"crapcheck: error: invalid Python syntax in {source_path.resolve()}:1:"
+    )
+    assert "Traceback" not in result.stderr
+
+
+@pytest.mark.parametrize("value", ["nan", "inf", "-inf"])
+def test_nonfinite_threshold_is_a_concise_cli_error(tmp_path: Path, value: str) -> None:
+    source_path, _, coverage_path = _write_analysis_fixture(tmp_path)
+
+    _assert_cli_error(
+        _run_cli(
+            str(source_path),
+            "--coverage",
+            str(coverage_path),
+            f"--max-crap={value}",
+        ),
+        "--max-crap must be finite",
+    )

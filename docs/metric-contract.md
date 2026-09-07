@@ -53,14 +53,15 @@ Decisions inside a nested function, lambda, or class do not increase the enclosi
 
 ## Implemented coverage contract
 
-Crapcheck reads coverage.py JSON reports containing function-region data. For one exact source-file key, it returns each named function region's `percent_statements_covered` value.
+Crapcheck reads coverage.py JSON reports containing function-region data. For one selected source-file key, it returns each named function region's `percent_statements_covered` value.
 
 - Statement coverage is used, not coverage.py's combined statement-and-branch percentage.
 - The empty-name module pseudo-region is ignored.
 - Qualified names emitted by coverage.py, including methods and nested functions, are preserved.
-- A source-file key absent from the report produces no function matches, allowing later analysis to report `N/A`.
+- An exact source-file key is preferred. Otherwise, one unambiguous whole-component suffix match is accepted in either direction.
+- No matching source file produces no function matches, allowing later analysis to report `N/A`.
+- Multiple suffix matches produce a clear error rather than selecting one.
 - A matching file without function-region data is incompatible and produces a clear error.
-- Path normalization and suffix matching are not implemented; source-file keys currently match exactly.
 
 ## Implemented analysis composition
 
@@ -72,7 +73,7 @@ The human-readable report contains function, module, cyclomatic complexity, stat
 
 ## Implemented command-line analysis
 
-`crapcheck SOURCE --coverage COVERAGE_JSON` reads one UTF-8 Python source file, looks up coverage using the source argument as the exact coverage-report file key, analyzes its functions, and prints the text report. The report's module column uses the source filename without its final suffix. A command with no arguments continues to print help and succeed.
+`crapcheck SOURCE --coverage COVERAGE_JSON` reads one UTF-8 Python source file, matches its source argument to a coverage-report file key, analyzes its functions, and prints the text report. The report's module column uses the source filename without its final suffix. A command with no arguments continues to print help and succeed.
 
 ## Implemented threshold behavior
 
@@ -83,7 +84,7 @@ The default maximum CRAP score is `8.0`. After printing the report, Crapcheck ex
 The following should be settled only as their implementation increments begin:
 
 - Complexity treatment for comprehensions, `match`, assertions, and lambdas.
-- Coverage-file path normalization and unambiguous suffix matching.
+- Cross-platform and filesystem-resolved path normalization.
 - Multi-file coverage input discovery and command-line shape.
 - Additional output formats.
 - Repository-wide configuration.

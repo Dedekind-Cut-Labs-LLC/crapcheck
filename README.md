@@ -22,7 +22,7 @@ crapcheck path/to/module.py --coverage coverage.json
 
 By default, Crapcheck exits with status 1 when any available CRAP score is greater than `8.0`. Use `--max-crap NUMBER` to change that boundary or `--no-fail` to produce a report without threshold failure.
 
-The source path currently must exactly match its key under `files` in the coverage JSON report. Recursive source discovery and path normalization are deferred.
+An exact source-path key in the coverage report is preferred. Otherwise, Crapcheck accepts one unambiguous whole-component suffix match, allowing an absolute source argument to match a relative coverage key. It fails clearly rather than guessing when multiple report keys match. Recursive source discovery and filesystem path resolution are deferred.
 
 ## Development setup
 

@@ -67,13 +67,61 @@ def test_loads_statement_coverage_for_named_function_regions(tmp_path: Path) -> 
     }
 
 
-def test_missing_exact_source_file_returns_no_function_coverage(tmp_path: Path) -> None:
+def test_matches_absolute_source_to_unique_relative_report_path(tmp_path: Path) -> None:
     report_path = write_report(
         tmp_path,
-        {"meta": {"format": 3}, "files": {"src/example.py": {"functions": {}}}},
+        {
+            "files": {
+                "src/example.py": {
+                    "functions": {"run": {"summary": {"percent_statements_covered": 75.0}}}
+                }
+            }
+        },
     )
 
-    assert load_function_coverage(report_path, "example.py") == {}
+    assert load_function_coverage(report_path, "/work/project/src/example.py") == {"run": 75.0}
+
+
+def test_prefers_exact_path_over_other_suffix_matches(tmp_path: Path) -> None:
+    report_path = write_report(
+        tmp_path,
+        {
+            "files": {
+                "example.py": {
+                    "functions": {"run": {"summary": {"percent_statements_covered": 100.0}}}
+                },
+                "src/example.py": {
+                    "functions": {"run": {"summary": {"percent_statements_covered": 0.0}}}
+                },
+            }
+        },
+    )
+
+    assert load_function_coverage(report_path, "example.py") == {"run": 100.0}
+
+
+def test_missing_source_file_returns_no_function_coverage(tmp_path: Path) -> None:
+    report_path = write_report(
+        tmp_path,
+        {"files": {"src/example.py": {"functions": {}}}},
+    )
+
+    assert load_function_coverage(report_path, "/work/project/other.py") == {}
+
+
+def test_rejects_ambiguous_suffix_matches(tmp_path: Path) -> None:
+    report_path = write_report(
+        tmp_path,
+        {
+            "files": {
+                "src/example.py": {"functions": {}},
+                "tests/example.py": {"functions": {}},
+            }
+        },
+    )
+
+    with pytest.raises(CoverageReportError, match="matches multiple coverage files"):
+        load_function_coverage(report_path, "example.py")
 
 
 def test_rejects_reports_without_function_region_data(tmp_path: Path) -> None:

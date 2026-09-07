@@ -62,6 +62,10 @@ Crapcheck reads coverage.py JSON reports containing function-region data. For on
 - A matching file without function-region data is incompatible and produces a clear error.
 - Path normalization and suffix matching are not implemented; source-file keys currently match exactly.
 
+## Implemented analysis composition
+
+Given Python source text and a mapping of qualified function names to statement-coverage percentages, Crapcheck emits one immutable result per discovered function in source order. Each result contains the qualified name, source extent, complexity, coverage, and CRAP score. A missing coverage entry preserves both coverage and CRAP score as `N/A`; it is never converted to zero coverage.
+
 ## Not decided yet
 
 The following should be settled only as their implementation increments begin:

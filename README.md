@@ -2,7 +2,7 @@
 
 Crapcheck is a Python command-line implementation of the Change Risk Analysis and Predictions (CRAP) metric.
 
-The project is in initial development. It analyzes Python source files and directories against function-region data in a coverage.py JSON report and prints a function-level CRAP table.
+Crapcheck 0.1.0 is an initial usable release. It analyzes Python source files and directories against function-region data in a coverage.py JSON report, prints a deterministic function-level CRAP table, and can enforce a configurable quality threshold.
 
 ## Intended use
 
@@ -16,7 +16,13 @@ Its initial behavioral references are Robert C. Martin's `crap4java`, `crap4go`,
 
 ## Installation
 
-Crapcheck requires Python 3.11 or newer and has no runtime dependencies. From a source checkout:
+Crapcheck requires Python 3.11 or newer and has no runtime dependencies. Install the tagged release directly from GitHub:
+
+```console
+python -m pip install "git+https://github.com/Dedekind-Cut-Labs-LLC/crapcheck.git@v0.1.0"
+```
+
+Or install from a source checkout:
 
 ```console
 python -m pip install .
@@ -69,6 +75,8 @@ uv build
 ## Initial metric contract
 
 The accepted starting behavior is recorded in [`docs/metric-contract.md`](docs/metric-contract.md). It is deliberately narrow and will be extended only through completed, tested increments.
+
+Release-readiness evidence is recorded in [`docs/usability-validation.md`](docs/usability-validation.md).
 
 ## License
 

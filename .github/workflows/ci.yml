@@ -42,3 +42,8 @@ jobs:
       - run: uv run ruff check .
       - run: uv run mypy src tests
       - run: uv build
+      - name: Verify built wheel in a clean environment
+        run: |
+          uv venv --python 3.11 /tmp/crapcheck-wheel
+          uv pip install --python /tmp/crapcheck-wheel/bin/python dist/*.whl
+          test "$(/tmp/crapcheck-wheel/bin/crapcheck --version)" = "crapcheck 0.1.0"

@@ -14,7 +14,7 @@ authors = [
 ]
 keywords = ["code-quality", "coverage", "crap-metric", "cyclomatic-complexity"]
 classifiers = [
-    "Development Status :: 2 - Pre-Alpha",
+    "Development Status :: 3 - Alpha",
     "Environment :: Console",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",

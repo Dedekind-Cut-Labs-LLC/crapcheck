@@ -127,3 +127,18 @@ def test_multiple_files_produce_one_deterministic_global_report(
             "safe        sample   1  100.0   1.0\n"
         )
     )
+
+
+def test_directory_input_matches_explicit_file_analysis(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    sample_path, alpha_path, coverage_path = _write_analysis_fixture(tmp_path)
+    options = ["--coverage", str(coverage_path), "--no-fail"]
+
+    assert main([str(tmp_path), *options]) == 0
+    directory_report = capsys.readouterr().out
+    assert main([str(sample_path), str(alpha_path), *options]) == 0
+    explicit_report = capsys.readouterr().out
+
+    assert directory_report == explicit_report

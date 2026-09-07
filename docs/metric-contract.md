@@ -12,7 +12,7 @@ The first implementation should preserve these invariants:
 
 - Cyclomatic complexity starts at one and increases for documented Python decision points.
 - Coverage is measured, not inferred from the presence of tests.
-- Coverage is attributed to each function from coverage.py executable-line data.
+- Coverage is attributed from coverage.py JSON function regions.
 - A function without matching coverage data reports coverage and CRAP as `N/A`.
 - Reports show function identity, module, complexity, coverage percentage, and CRAP score.
 - Human-readable results are sorted by CRAP score from highest to lowest, with `N/A` last.
@@ -51,12 +51,23 @@ The current analyzer adds:
 
 Decisions inside a nested function, lambda, or class do not increase the enclosing function's complexity. Named nested functions and methods are analyzed separately.
 
+## Implemented coverage contract
+
+Crapcheck reads coverage.py JSON reports containing function-region data. For one exact source-file key, it returns each named function region's `percent_statements_covered` value.
+
+- Statement coverage is used, not coverage.py's combined statement-and-branch percentage.
+- The empty-name module pseudo-region is ignored.
+- Qualified names emitted by coverage.py, including methods and nested functions, are preserved.
+- A source-file key absent from the report produces no function matches, allowing later analysis to report `N/A`.
+- A matching file without function-region data is incompatible and produces a clear error.
+- Path normalization and suffix matching are not implemented; source-file keys currently match exactly.
+
 ## Not decided yet
 
 The following should be settled only as their implementation increments begin:
 
 - Complexity treatment for comprehensions, `match`, assertions, and lambdas.
-- Nested-function coverage attribution.
+- Coverage-file path normalization and unambiguous suffix matching.
 - Coverage input discovery and command-line shape.
 - Additional output formats.
 - Repository-wide configuration.

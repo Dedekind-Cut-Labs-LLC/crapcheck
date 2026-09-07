@@ -66,6 +66,10 @@ Crapcheck reads coverage.py JSON reports containing function-region data. For on
 
 Given Python source text and a mapping of qualified function names to statement-coverage percentages, Crapcheck emits one immutable result per discovered function in source order. Each result contains the qualified name, source extent, complexity, coverage, and CRAP score. A missing coverage entry preserves both coverage and CRAP score as `N/A`; it is never converted to zero coverage.
 
+## Implemented text report
+
+The human-readable report contains function, module, cyclomatic complexity, statement coverage percentage, and CRAP score columns. Numeric values use one decimal place. Rows are sorted stably from highest to lowest CRAP score, preserving input order for equal scores, with `N/A` scores after all numeric scores.
+
 ## Not decided yet
 
 The following should be settled only as their implementation increments begin:
